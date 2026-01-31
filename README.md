@@ -54,7 +54,7 @@ dags:
     repo: https://github.com/yourorg/demo1_gitsync.git
 ```
 
-Push the customized model to your repository:
+Create an empty `demo1_actual` repository on GitHub, then push:
 
 ```bash
 git remote set-url origin https://github.com/yourorg/demo1_actual.git
