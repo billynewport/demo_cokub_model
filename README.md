@@ -22,8 +22,8 @@ This creates `airflow_db` and `merge_db` databases.
 ### Step 2: Clone the Repository
 
 ```bash
-git clone https://github.com/datasurface/demo1_airflow.git
-cd demo1_airflow
+git clone https://github.com/datasurface/demo1.git
+cd demo1
 ```
 
 ### Step 3: Create Kubernetes Namespace and Secrets
