@@ -289,8 +289,7 @@ dags:
     branch: main
     subPath: dags
     wait: 60
-    credentialsSecret: git-dags
-    credentialsSecretKey: token
+    credentialsSecret: git-dags  # Must have GIT_SYNC_USERNAME/PASSWORD and GITSYNC_USERNAME/PASSWORD keys
 
 # Shared logs volume
 logs:
