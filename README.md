@@ -58,6 +58,14 @@ git_config: GitCacheConfig = GitCacheConfig(
 pv_storage_class="standard"         # Docker Desktop storage class
 ```
 
+**Edit `helm/airflow-values.yaml`:**
+
+```yaml
+dags:
+  gitSync:
+    repo: https://github.com/yourorg/your-repo.git  # Your forked repository
+```
+
 ### Step 5: Create Kubernetes Namespace and Secrets
 
 ```bash
