@@ -20,10 +20,10 @@ from datasurface.platforms.yellow import YellowDataPlatform, YellowPlatformServi
 from datasurface.platforms.yellow.assembly import GitCacheConfig, YellowExternalAirflow3AndMergeDatabase
 from datasurface.repos import VersionPatternReleaseSelector, GitHubRepository, ReleaseType, VersionPatterns
 
-# Production environment configuration - matches kub-test Airflow 3.x setup
+# Docker Desktop configuration
 KUB_NAME_SPACE: str = "demo1"
 AIRFLOW_SERVICE_ACCOUNT: str = "airflow-worker"
-MERGE_HOST: str = "postgres-demo"
+MERGE_HOST: str = "host.docker.internal"  # Access Docker containers from K8s
 MERGE_DBNAME: str = "merge_db"
 
 
@@ -39,8 +39,8 @@ def createDemoPSP() -> YellowPlatformServiceProvider:
 
     git_config: GitCacheConfig = GitCacheConfig(
         enabled=True,
-        access_mode="ReadWriteMany",
-        storageClass="longhorn"
+        access_mode="ReadWriteOnce",
+        storageClass="standard"
     )
     yp_assembly: YellowExternalAirflow3AndMergeDatabase = YellowExternalAirflow3AndMergeDatabase(
         name="Demo",
@@ -57,7 +57,7 @@ def createDemoPSP() -> YellowPlatformServiceProvider:
         mergeRW_Credential=Credential("postgres-demo-merge", CredentialType.USER_PASSWORD),
         yp_assembly=yp_assembly,
         merge_datacontainer=k8s_merge_datacontainer,
-        pv_storage_class="longhorn",
+        pv_storage_class="standard",
         datasurfaceDockerImage="datasurface/datasurface:v1.1.0",
         dataPlatforms=[
             YellowDataPlatform(
