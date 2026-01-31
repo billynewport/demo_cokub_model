@@ -42,12 +42,14 @@ cd demo1
 Customize the model for your environment:
 
 **Edit `eco.py`:**
+
 ```python
 GIT_REPO_OWNER: str = "yourorg"
 GIT_REPO_NAME: str = "demo1_actual"
 ```
 
 **Edit `helm/airflow-values.yaml`:**
+
 ```yaml
 dags:
   gitSync:
