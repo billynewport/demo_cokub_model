@@ -34,7 +34,6 @@ This guide walks you through:
 6. Pull the DataSurface image
 7. Generate bootstrap artifacts and deploy
 
-
 ### Step 1: Clone and Customize the Model
 
 ```bash
