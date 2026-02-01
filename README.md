@@ -263,3 +263,10 @@ Common missing secrets: `git`, `postgres-demo-merge`
 ## DataSurface Artifacts
 
 See [ARTIFACTS.md](ARTIFACTS.md) for accessing DataSurface Docker images and Python modules.
+
+
+## How to do this
+
+Take a look at https://github.com/datasurface/demo1
+
+I'd like to set it up locally. The 2 repos I will use are datasurface/demo1_actual for the model and datasurface/demo1_airflow for the gitsync
