@@ -25,7 +25,7 @@ def createEcosystem() -> Ecosystem:
     """
 
     git: Credential = Credential("git", CredentialType.API_TOKEN)
-    eRepo: GitHubRepository = GitHubRepository( f"{GIT_REPO_OWNER}/{GIT_REPO_NAME}", "main_edit", credential=git)
+    eRepo: GitHubRepository = GitHubRepository(f"{GIT_REPO_OWNER}/{GIT_REPO_NAME}", "main_edit", credential=git)
 
     ecosys: Ecosystem = Ecosystem(
         name="Demo",

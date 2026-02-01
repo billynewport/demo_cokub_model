@@ -6,21 +6,32 @@ A template for bootstrapping a DataSurface Yellow environment on Docker Desktop 
 
 - Docker Desktop with Kubernetes enabled
 - `kubectl` and `helm` CLI tools
-- GitHub Personal Access Token (for GitSync)
+- GitHub Personal Access Token (for GitSync and model repository access)
+- GitLab credentials for DataSurface Docker images (see [ARTIFACTS.md](ARTIFACTS.md))
+
+## Environment Variables
+
+Set these before starting:
+
+```bash
+export NAMESPACE="demo1"
+export GITHUB_USERNAME="your-github-username"
+export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
+export GITLAB_CUSTOMER_USER="gitlab+deploy-token-xxxxx"
+export GITLAB_CUSTOMER_TOKEN="your-gitlab-deploy-token"
+export DATASURFACE_VERSION="1.1.0"
+```
 
 ## Quick Start
 
-This guide walks you through the following:
+This guide walks you through:
 
-- Setup a postgres database container for datasurface to use
-- Clone this repository containing the bootstrap model and modify it as needed, then push the customized model to a new repository, lets call it 'demo1_actual'.
-- Create a gitsync repository called demo1_gitsync which is just for DAGs for our future airflow
-
-- Create the database server and databases
-- Install helm with correct values and use gitsync against demo1_gitsync
-
-- Use demo1_actual's customized model to generate the bootstrap artifacts
-- Push the generated DAG files to demo1_gitsync
+1. Start PostgreSQL database container
+2. Clone and customize the model, push to your repository
+3. Create an empty GitSync repository for Airflow DAGs
+4. Configure Kubernetes namespace, secrets, and image pull credentials
+5. Install Airflow via Helm
+6. Generate bootstrap artifacts and deploy
 
 ### Step 1: Start PostgreSQL
 
@@ -48,15 +59,26 @@ GIT_REPO_OWNER: str = "yourorg"
 GIT_REPO_NAME: str = "demo1_actual"
 ```
 
+**Edit `rte_demo.py`:** Update the Docker image to use the GitLab registry:
+
+```python
+datasurfaceDockerImage="registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.1.0",
+```
+
 **Edit `helm/airflow-values.yaml`:**
 
 ```yaml
 dags:
   gitSync:
-    repo: https://github.com/yourorg/demo1_gitsync.git
+    repo: https://github.com/yourorg/demo1_airflow.git
 ```
 
-Create an empty `demo1_actual` repository on GitHub, then push:
+Create empty repositories on GitHub:
+
+- `yourorg/demo1_actual` - for the customized model
+- `yourorg/demo1_airflow` - for Airflow DAGs (GitSync)
+
+Push your customized model:
 
 ```bash
 git remote set-url origin https://github.com/yourorg/demo1_actual.git
@@ -68,27 +90,44 @@ git push -u origin main
 ### Step 3: Create Kubernetes Namespace and Secrets
 
 ```bash
-export NAMESPACE="demo1"
+# Create namespace
 kubectl create namespace $NAMESPACE
 
-# PostgreSQL credentials
+# PostgreSQL credentials (for Airflow metadata)
 kubectl create secret generic postgres \
   --from-literal=USER=postgres \
   --from-literal=PASSWORD=password \
   -n $NAMESPACE
 
-# Git credentials for model repository
-kubectl create secret generic git \
-  --from-literal=TOKEN=$GITHUB_TOKEN \
+# PostgreSQL credentials for merge database (used by DataSurface jobs)
+kubectl create secret generic postgres-demo-merge \
+  --from-literal=USER=postgres \
+  --from-literal=PASSWORD=password \
   -n $NAMESPACE
 
-# Git credentials for DAG sync (both v3 and v4 key formats)
+# Git credentials for model repository (note: lowercase 'token')
+kubectl create secret generic git \
+  --from-literal=token=$GITHUB_TOKEN \
+  -n $NAMESPACE
+
+# Git credentials for DAG sync (supports both v3 and v4 key formats)
 kubectl create secret generic git-dags \
   --from-literal=GIT_SYNC_USERNAME=$GITHUB_USERNAME \
   --from-literal=GIT_SYNC_PASSWORD=$GITHUB_TOKEN \
   --from-literal=GITSYNC_USERNAME=$GITHUB_USERNAME \
   --from-literal=GITSYNC_PASSWORD=$GITHUB_TOKEN \
   -n $NAMESPACE
+
+# GitLab registry credentials for DataSurface images
+kubectl create secret docker-registry datasurface-registry \
+  --docker-server=registry.gitlab.com \
+  --docker-username="$GITLAB_CUSTOMER_USER" \
+  --docker-password="$GITLAB_CUSTOMER_TOKEN" \
+  -n $NAMESPACE
+
+# Attach image pull secret to default service account
+kubectl patch serviceaccount default -n $NAMESPACE \
+  -p '{"imagePullSecrets": [{"name": "datasurface-registry"}]}'
 ```
 
 ### Step 4: Install Airflow
@@ -103,16 +142,24 @@ helm install airflow apache-airflow/airflow \
   --timeout 10m
 ```
 
-### Step 5: Generate and Deploy Bootstrap
+### Step 5: Pull DataSurface Image
 
-Here we should clone the current demo1_actual repo and then use the model with this docker run command to generate the various bootstrap artifacts needed for the system.
+```bash
+# Login to GitLab registry
+docker login registry.gitlab.com -u "$GITLAB_CUSTOMER_USER" -p "$GITLAB_CUSTOMER_TOKEN"
+
+# Pull the DataSurface image
+docker pull registry.gitlab.com/datasurface-inc/datasurface/datasurface:v${DATASURFACE_VERSION}
+```
+
+### Step 6: Generate and Deploy Bootstrap
 
 ```bash
 # Generate bootstrap artifacts
 docker run --rm \
   -v "$(pwd)":/workspace/model \
   -w /workspace/model \
-  registry.gitlab.com/datasurface-inc/datasurface/datasurface:${DATASURFACE_VERSION}$ \
+  registry.gitlab.com/datasurface-inc/datasurface/datasurface:v${DATASURFACE_VERSION} \
   python -m datasurface.cmd.platform generatePlatformBootstrap \
   --ringLevel 0 \
   --model /workspace/model \
@@ -120,31 +167,98 @@ docker run --rm \
   --psp Demo_PSP \
   --rte-name demo
 
-# Push DAG to your gitsync repository
-cd /path/to/demo_gitsync
+# Apply Kubernetes bootstrap (MCP server, network policies, etc.)
+kubectl apply -f generated_output/Demo_PSP/kubernetes-bootstrap.yaml
+
+# Push DAG to your GitSync repository
+cd /path/to/demo1_airflow
 mkdir -p dags
-cp /path/to/demo_actual/generated_output/Demo_PSP/*_infrastructure_dag.py dags/
+cp /path/to/demo1_actual/generated_output/Demo_PSP/*_infrastructure_dag.py dags/
 git add dags/
 git commit -m "Add infrastructure DAG"
 git push
 
-# Apply init jobs
-kubectl apply -f generated_output/Demo_PSP/*_ring1_init_job.yaml
-kubectl apply -f generated_output/Demo_PSP/*_model_merge_job.yaml
+# Apply init and merge jobs
+kubectl apply -f generated_output/Demo_PSP/demo_psp_ring1_init_job.yaml
+kubectl apply -f generated_output/Demo_PSP/demo_psp_model_merge_job.yaml
 ```
+
+### Step 7: Verify Deployment
+
+```bash
+# Check all pods are running
+kubectl get pods -n $NAMESPACE
+
+# Check jobs completed successfully
+kubectl get jobs -n $NAMESPACE
+
+# Expected output:
+# - airflow-* pods: Running
+# - demo-psp-mcp-server-*: Running
+# - demo-psp-ring1-init-*: Completed
+# - demo-psp-model-merge-job-*: Completed
+```
+
+### Step 8: Access Airflow UI
+
+```bash
+kubectl port-forward svc/airflow-api-server 8080:8080 -n $NAMESPACE
+```
+
+Open <http://localhost:8080> in your browser.
+
+- Username: `admin`
+- Password: `admin`
 
 ## Project Structure
 
-```
+```text
 .
 ├── docker/
-│   └── postgres/          # PostgreSQL compose setup
+│   └── postgres/            # PostgreSQL compose setup
 ├── helm/
 │   └── airflow-values.yaml  # Airflow Helm values for Docker Desktop
-├── eco.py                 # Ecosystem definition
-├── rte_demo.py           # Runtime environment configuration
+├── generated_output/        # Generated after running bootstrap (gitignored)
+│   └── Demo_PSP/
+│       ├── kubernetes-bootstrap.yaml
+│       ├── demo_psp_infrastructure_dag.py
+│       ├── demo_psp_ring1_init_job.yaml
+│       ├── demo_psp_model_merge_job.yaml
+│       └── demo_psp_reconcile_views_job.yaml
+├── eco.py                   # Ecosystem definition
+├── rte_demo.py              # Runtime environment configuration
 └── README.md
 ```
+
+## Secrets Reference
+
+| Secret Name | Keys | Purpose |
+|-------------|------|---------|
+| `postgres` | `USER`, `PASSWORD` | Airflow metadata database |
+| `postgres-demo-merge` | `USER`, `PASSWORD` | DataSurface merge database |
+| `git` | `token` | Model repository access |
+| `git-dags` | `GITSYNC_USERNAME`, `GITSYNC_PASSWORD` | Airflow DAG sync |
+| `datasurface-registry` | Docker registry auth | Pull DataSurface images |
+
+## Troubleshooting
+
+### ImagePullBackOff
+
+If pods show `ImagePullBackOff`, verify:
+
+1. `datasurface-registry` secret exists: `kubectl get secret datasurface-registry -n $NAMESPACE`
+2. Default service account has imagePullSecrets: `kubectl get sa default -n $NAMESPACE -o yaml`
+3. GitLab credentials are valid
+
+### CreateContainerConfigError
+
+Check for missing secrets:
+
+```bash
+kubectl describe pod <pod-name> -n $NAMESPACE | grep -A5 Events
+```
+
+Common missing secrets: `git`, `postgres-demo-merge`
 
 ## DataSurface Artifacts
 
