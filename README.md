@@ -112,7 +112,7 @@ Here we should clone the current demo1_actual repo and then use the model with t
 docker run --rm \
   -v "$(pwd)":/workspace/model \
   -w /workspace/model \
-  datasurface/datasurface:latest \
+  registry.gitlab.com/datasurface-inc/datasurface/datasurface:${DATASURFACE_VERSION}$ \
   python -m datasurface.cmd.platform generatePlatformBootstrap \
   --ringLevel 0 \
   --model /workspace/model \
