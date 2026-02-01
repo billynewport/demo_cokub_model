@@ -65,10 +65,12 @@ dags:
     wait: 60
     credentialsSecret: git-dags  # Secret must have GITSYNC_USERNAME and GITSYNC_PASSWORD keys
 
-# Logs - disable persistence for Docker Desktop (local-path doesn't support RWX)
+# Logs - enable persistence for Docker Desktop (hostpath works for single-node clusters with RWX)
 logs:
   persistence:
-    enabled: false
+    enabled: true
+    storageClassName: hostpath
+    size: 5Gi
 
 config:
   logging:
