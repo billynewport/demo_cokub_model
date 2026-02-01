@@ -105,9 +105,9 @@ kubectl create secret generic postgres-demo-merge \
   --from-literal=PASSWORD=password \
   -n $NAMESPACE
 
-# Git credentials for model repository (note: lowercase 'token')
+# Git credentials for model repository (note: uppercase 'TOKEN')
 kubectl create secret generic git \
-  --from-literal=token=$GITHUB_TOKEN \
+  --from-literal=TOKEN=$GITHUB_TOKEN \
   -n $NAMESPACE
 
 # Git credentials for DAG sync (supports both v3 and v4 key formats)
@@ -232,11 +232,13 @@ Open <http://localhost:8080> in your browser.
 
 ## Secrets Reference
 
+For detailed information on how Yellow converts model credential names to Kubernetes secrets and the expected environment variable format, see the [credential creation guide](.claude/skills/create-k8-credential/SKILLS.md).
+
 | Secret Name | Keys | Purpose |
-|-------------|------|---------|
+| ------------- | ------ | --------- |
 | `postgres` | `USER`, `PASSWORD` | Airflow metadata database |
 | `postgres-demo-merge` | `USER`, `PASSWORD` | DataSurface merge database |
-| `git` | `token` | Model repository access |
+| `git` | `TOKEN` | Model repository access |
 | `git-dags` | `GITSYNC_USERNAME`, `GITSYNC_PASSWORD` | Airflow DAG sync |
 | `datasurface-registry` | Docker registry auth | Pull DataSurface images |
 
@@ -260,13 +262,40 @@ kubectl describe pod <pod-name> -n $NAMESPACE | grep -A5 Events
 
 Common missing secrets: `git`, `postgres-demo-merge`
 
+### PostgreSQL Port Conflict
+
+If Kubernetes jobs fail to connect to PostgreSQL with authentication errors or "database does not exist", you may have a local PostgreSQL instance running on port 5432 that conflicts with the Docker container.
+
+Check for conflicting PostgreSQL:
+
+```bash
+# Check what's listening on 5432
+lsof -i :5432
+
+# If using Homebrew PostgreSQL, stop it
+brew services stop postgresql@17  # or postgresql@16, postgresql, etc.
+```
+
+Kubernetes pods using `host.docker.internal:5432` will connect to whatever is listening on your host's port 5432, which may be a local PostgreSQL instead of the Docker container.
+
+### Database Does Not Exist
+
+If you see `database "merge_db" does not exist` or similar errors, the PostgreSQL init scripts may not have run. This happens when reusing an existing Docker volume.
+
+Manually create the databases:
+
+```bash
+docker exec datasurface-postgres psql -U postgres -c "CREATE DATABASE airflow_db;" -c "CREATE DATABASE merge_db;"
+```
+
+Or remove the volume and restart:
+
+```bash
+cd docker/postgres
+docker compose down -v
+docker compose up -d
+```
+
 ## DataSurface Artifacts
 
 See [ARTIFACTS.md](ARTIFACTS.md) for accessing DataSurface Docker images and Python modules.
-
-
-## How to do this
-
-Take a look at https://github.com/datasurface/demo1
-
-I'd like to set it up locally. The 2 repos I will use are datasurface/demo1_actual for the model and datasurface/demo1_airflow for the gitsync

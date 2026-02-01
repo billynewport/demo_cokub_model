@@ -121,7 +121,7 @@ sudo kubectl create secret generic sa \
 **Secret Key Format:**
 
 | Credential Type | Keys |
-|-----------------|------|
+| ----------------- | ------ |
 | Database | `USER`, `PASSWORD` |
 | Token/PAT | `token` |
 | API Key Pair | `api_key`, `api_secret` |
@@ -651,7 +651,7 @@ done
 For managed Kubernetes, consider using cloud-native registries with IAM:
 
 | Cloud | Registry | Auth Method |
-|-------|----------|-------------|
+| ------- | ---------- | ------------- |
 | AWS EKS | ECR | IAM roles for service accounts |
 | Azure AKS | ACR | Managed identity |
 | Google GKE | Artifact Registry | Workload Identity |
@@ -692,7 +692,7 @@ sudo crictl pull datasurface/datasurface:latest
 #### Comparison Table
 
 | Feature | Production (EKS/AKS/GKE/Kubeadm) | K3s (Dev/Edge) |
-|---------|--------------------------------|----------------|
+| --------- | -------------------------------- | ---------------- |
 | Config method | imagePullSecrets (standard K8s) | `registries.yaml` (K3s-specific) |
 | Scope | Per-namespace | Cluster-wide |
 | Works on all K8s | ✅ Yes | ❌ K3s only |
@@ -970,7 +970,7 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json` or workspace settings):
 ### Available MCP Tools
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `list_object_types` | List queryable object types |
 | `list_objects` | List all objects of a type |
 | `read_object` | Get full JSON for an object |
@@ -1009,7 +1009,7 @@ This separation means the system scales differently than traditional Airflow dep
 ### Scaling Layers
 
 | Layer | Component | Scaling Factor | Bottleneck |
-|-------|-----------|----------------|------------|
+| ------- | ----------- | ---------------- | ------------ |
 | **Control Plane** | Schedulers, Workers | DAG count, task throughput | Parsing latency, memory |
 | **Execution** | Kubernetes pods | Concurrent jobs | Node CPU/RAM, pod limits |
 | **Storage** | Merge database | Data volume, query load | Connection pool, I/O |
@@ -1019,7 +1019,7 @@ This separation means the system scales differently than traditional Airflow dep
 **Recommended baseline (from Google Airflow 3 benchmarks):**
 
 | Component | Replicas | Notes |
-|-----------|----------|-------|
+| ----------- | ---------- | ------- |
 | Schedulers | 2 | HA, handles 10k+ DAGs with database-backed approach |
 | Celery Workers | 6 | 16 concurrency each = 96 concurrent dispatches. For even distribution across N worker nodes, use N workers (e.g., 3 workers for 3 nodes) |
 | DAG Processor | 1 | Reads factory tables, not files |
@@ -1045,7 +1045,7 @@ This prevents memory explosion when scaling to thousands of DAGs. Workers never 
 ### DAG Count Limits
 
 | DAG Count | Shards Needed | Notes |
-|-----------|---------------|-------|
+| ----------- | --------------- | ------- |
 | 1–1,000 | 1 | Default configuration |
 | 1,000–5,000 | 1–2 | May see slight parsing lag |
 | 5,000–20,000 | 5–10 | Sharding recommended |
@@ -1058,7 +1058,7 @@ Enable sharding by setting `num_shards` in your platform configuration. Each sha
 **Pod resource defaults (from infrastructure_dag template):**
 
 | Job Type | Memory Request | CPU Request | Memory Limit | CPU Limit |
-|----------|----------------|-------------|--------------|-----------|
+| ---------- | ---------------- | ------------- | -------------- | ----------- |
 | Ingestion | 256Mi | 100m | 256Mi | 100m |
 | DataTransformer | 512Mi | 200m | 2Gi | 1000m |
 | CQRS Sync | 512Mi | 200m | 1Gi | 500m |
@@ -1066,7 +1066,7 @@ Enable sharding by setting `num_shards` in your platform configuration. Each sha
 
 **Capacity estimation:**
 
-```
+```text
 Available headroom = Total cluster resources - Control plane overhead
 Concurrent pods = min(RAM headroom / avg pod RAM, CPU headroom / avg pod CPU)
 ```
@@ -1082,14 +1082,14 @@ Concurrent pods = min(RAM headroom / avg pod RAM, CPU headroom / avg pod CPU)
 
 **Jobs per hour:**
 
-```
+```test
 Throughput = Concurrent pods × (3600 / avg job duration in seconds)
 ```
 
 **Example calculations:**
 
 | Job Duration | Concurrent Pods | Jobs/Hour | Jobs/Day |
-|--------------|-----------------|-----------|----------|
+| -------------- | ----------------- | ----------- | ---------- |
 | 30 seconds | 40 | 4,800 | 115,000 |
 | 60 seconds | 40 | 2,400 | 57,600 |
 | 120 seconds | 40 | 1,200 | 28,800 |
@@ -1097,7 +1097,7 @@ Throughput = Concurrent pods × (3600 / avg job duration in seconds)
 ### Supported Stream Counts
 
 | Schedule | Concurrent Pods | Supported Streams |
-|----------|-----------------|-------------------|
+| ---------- | ----------------- | ------------------- |
 | Hourly | 40 | ~4,800 |
 | Every 15 min | 40 | ~1,200 |
 | Every 5 min | 40 | ~400 |
@@ -1154,7 +1154,7 @@ PGPASSWORD=password psql -h $PG_HOST -U postgres -d merge_db_af3 -c "
 ## Quick Reference
 
 | Component | Command |
-|-----------|---------|
+| ----------- | --------- |
 | Check pods | `sudo kubectl get pods -n yp-airflow3` |
 | Check DAG loading | `sudo kubectl logs deployment/airflow-dag-processor -n yp-airflow3 --tail=50 \| grep '# DAGs'` |
 | Restart Airflow | `sudo kubectl rollout restart deployment airflow-scheduler airflow-dag-processor -n yp-airflow3` |
@@ -1166,4 +1166,3 @@ PGPASSWORD=password psql -h $PG_HOST -U postgres -d merge_db_af3 -c "
 | Clear git cache | See [Git Cache Not Refreshing](#git-cache-not-refreshing) |
 | MCP Server URL | `http://<node>:<nodeport>/sse` (get nodeport from `kubectl get svc -n yp-airflow3 \| grep mcp`) |
 | Restart MCP | `sudo kubectl rollout restart deployment/test-dp-mcp-server -n yp-airflow3` |
-

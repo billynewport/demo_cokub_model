@@ -97,7 +97,7 @@ extra-index-url = https://<username>:<token>@gitlab.com/api/v4/projects/77796931
 
 Add the index URL to your `requirements.txt`:
 
-```
+```text
 --extra-index-url https://<username>:<token>@gitlab.com/api/v4/projects/77796931/packages/pypi/simple
 datasurface==${DATASURFACE_VERSION}
 ```
