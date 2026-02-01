@@ -167,7 +167,7 @@ git_config: GitCacheConfig = GitCacheConfig(
 
 ## Step 3: Push Customized Model to Repository
 
-**CRITICAL: Do not skip this step. The model MUST be pushed to the target repository.**
+**CRITICAL: Do not skip this step. The model MUST be pushed AND tagged for DataSurface to pick it up.**
 
 ```bash
 # Change remote to target repository
@@ -179,13 +179,18 @@ git commit -m "Customize model for environment"
 
 # Push to the model repository (force if replacing existing)
 git push -u origin main --force
+
+# Tag the commit for DataSurface to recognize it
+git tag v1.0.0-demo
+git push origin v1.0.0-demo
 ```
 
 **Checkpoint:**
 
 - Run `git remote -v` - should show the target model repository
 - Run `git log -1` - should show the customize commit
-- Verify on GitHub that the repository has the updated files
+- Run `git tag` - should show `v1.0.0-demo`
+- Verify on GitHub that the repository has the updated files AND the tag exists
 
 ---
 
