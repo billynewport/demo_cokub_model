@@ -354,6 +354,8 @@ docker run --rm \
 
 ## Step 7: Deploy Bootstrap and Jobs
 
+**IMPORTANT:** Jobs must be run sequentially. The ring1-init job creates database tables that model-merge depends on. Running them simultaneously causes a race condition where model-merge fails trying to access non-existent tables.
+
 ```bash
 # Apply Kubernetes bootstrap
 kubectl apply -f generated_output/Demo_PSP/kubernetes-bootstrap.yaml
@@ -361,9 +363,13 @@ kubectl apply -f generated_output/Demo_PSP/kubernetes-bootstrap.yaml
 # Delete existing jobs if redeploying
 kubectl delete job demo-psp-ring1-init demo-psp-model-merge-job -n $NAMESPACE --ignore-not-found
 
-# Apply init and merge jobs
+# Step 1: Apply and wait for ring1-init to complete (creates tables)
 kubectl apply -f generated_output/Demo_PSP/demo_psp_ring1_init_job.yaml
+kubectl wait --for=condition=complete --timeout=120s job/demo-psp-ring1-init -n $NAMESPACE
+
+# Step 2: Apply model-merge job (depends on tables created by ring1-init)
 kubectl apply -f generated_output/Demo_PSP/demo_psp_model_merge_job.yaml
+kubectl wait --for=condition=complete --timeout=120s job/demo-psp-model-merge-job -n $NAMESPACE
 ```
 
 **Checkpoint:** Run `kubectl get jobs -n $NAMESPACE` - both jobs should complete:
@@ -404,6 +410,8 @@ git push
 
 ## Step 9: Verify Deployment
 
+### 9a. Check Pods and Jobs Status
+
 ```bash
 # Check all pods are running
 kubectl get pods -n $NAMESPACE
@@ -415,8 +423,41 @@ kubectl get jobs -n $NAMESPACE
 Expected state:
 
 - All airflow-* pods: Running
-- demo-psp-ring1-init: Completed
-- demo-psp-model-merge-job: Completed
+- demo-psp-ring1-init: Complete (1/1)
+- demo-psp-model-merge-job: Complete (1/1)
+
+### 9b. Verify Job Logs (No Errors)
+
+```bash
+# Check ring1-init logs - should end with "Ring 1 initialization complete"
+kubectl logs job/demo-psp-ring1-init -n $NAMESPACE | tail -5
+
+# Check model-merge logs - should end with "Model merge handler complete"
+# and show "Populated factory DAG configurations" with config_count > 0
+kubectl logs job/demo-psp-model-merge-job -n $NAMESPACE | tail -10
+```
+
+**Key success indicators in model-merge logs:**
+- `"Cleared existing factory DAG configurations"` - tables exist
+- `"Populated factory DAG configurations"` with `config_count: 2` (or more)
+- `"Populated CQRS DAG configurations"` with `config_count: 1` (or more)
+- No ERROR level messages (WARNING about event publishing is normal)
+
+### 9c. Verify Database Tables Created
+
+```bash
+# Connect to PostgreSQL and check tables exist in merge_db
+docker exec -it datasurface-postgres psql -U postgres -d merge_db -c "\dt"
+```
+
+Expected tables created by ring1-init:
+- `demo_psp_factory_dags`
+- `demo_psp_cqrs_dags`
+- `demo_psp_dc_reconcile_dags`
+- `scd2_airflow_dsg`
+- `scd2_airflow_datatransformer`
+
+**Checkpoint:** All pods running, jobs completed (1/1), tables exist in merge_db
 
 ---
 
