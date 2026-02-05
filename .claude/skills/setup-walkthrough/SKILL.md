@@ -80,7 +80,21 @@ kubectl get namespace $NAMESPACE -o json | jq '.spec.finalizers = []' | \
   kubectl replace --raw "/api/v1/namespaces/$NAMESPACE/finalize" -f -
 ```
 
-Reset PostgreSQL if needed:
+Reset PostgreSQL databases (choose one approach):
+
+**Option A: If PostgreSQL container is already running** (preserves container, clears data):
+
+```bash
+# Drop and recreate databases to clear old Airflow DAG history and merge data
+docker exec datasurface-postgres psql -U postgres -c "DROP DATABASE IF EXISTS airflow_db;" 
+docker exec datasurface-postgres psql -U postgres -c "CREATE DATABASE airflow_db;"
+docker exec datasurface-postgres psql -U postgres -c "DROP DATABASE IF EXISTS merge_db;"
+docker exec datasurface-postgres psql -U postgres -c "CREATE DATABASE merge_db;"
+docker exec datasurface-postgres psql -U postgres -c "DROP DATABASE IF EXISTS customer_db;"
+docker exec datasurface-postgres psql -U postgres -c "CREATE DATABASE customer_db;"
+```
+
+**Option B: Full reset** (destroys and recreates container):
 
 ```bash
 cd docker/postgres
@@ -458,6 +472,30 @@ Expected tables created by ring1-init:
 - `scd2_airflow_datatransformer`
 
 **Checkpoint:** All pods running, jobs completed (1/1), tables exist in merge_db
+
+### 9d. Verify DAGs are Registered in Airflow
+
+Wait 60-90 seconds for git-sync to pull the DAG file, then verify DAGs are loaded:
+
+```bash
+kubectl exec -n $NAMESPACE deployment/airflow-dag-processor -c dag-processor -- airflow dags list 2>&1 | grep -v "DeprecationWarning\|RemovedInAirflow\|permissions.py"
+```
+
+Expected DAGs (5 total):
+
+| DAG ID | Status | Description |
+|--------|--------|-------------|
+| `scd2_factory_dag` | Active | Factory DAG for SCD2 pipelines |
+| `Demo_PSP_K8sMergeDB_reconcile` | Active | DataContainer reconciliation |
+| `Demo_PSP_default_K8sMergeDB_cqrs` | Active | CQRS DAG |
+| `demo-psp_infrastructure` | Paused | Infrastructure management |
+| `scd2_datatransformer_factory` | Paused | DataTransformer factory |
+
+**Checkpoint:** All 5 DAGs appear in the list. If DAGs are missing, check for import errors:
+
+```bash
+kubectl exec -n $NAMESPACE deployment/airflow-dag-processor -c dag-processor -- airflow dags list-import-errors
+```
 
 ---
 
