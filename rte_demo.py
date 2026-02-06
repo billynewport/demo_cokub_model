@@ -21,7 +21,7 @@ from datasurface.platforms.yellow.assembly import GitCacheConfig, YellowExternal
 from datasurface.repos import VersionPatternReleaseSelector, GitHubRepository, ReleaseType, VersionPatterns
 
 # Docker Desktop configuration
-KUB_NAME_SPACE: str = "demo_cokub"
+KUB_NAME_SPACE: str = "demo-cokub"
 AIRFLOW_SERVICE_ACCOUNT: str = "airflow-worker"
 MERGE_HOST: str = "postgres-co"
 MERGE_DBNAME: str = "merge_db"
