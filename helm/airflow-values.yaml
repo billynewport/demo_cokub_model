@@ -1,5 +1,5 @@
-# Airflow Helm Values for Docker Desktop Kubernetes
-# Adapted from INSTALL_DATASURFACE.md for local development
+# Airflow Helm Values for Remote Kubernetes Cluster (cokub-master)
+# Airflow metadata DB on postgresaf-co, merge DB on postgres-co
 
 executor: CeleryExecutor
 
@@ -9,7 +9,7 @@ images:
     repository: apache/airflow
     tag: "3.1.6"
 
-# External PostgreSQL (running in Docker, accessible via host.docker.internal)
+# External PostgreSQL on postgresaf-co
 postgresql:
   enabled: false
 
@@ -18,7 +18,7 @@ data:
     user: postgres
     pass: password
     protocol: postgresql
-    host: host.docker.internal
+    host: postgresaf-co
     port: 5432
     db: airflow_db
 
@@ -27,20 +27,20 @@ redis:
   enabled: true
   persistence:
     enabled: true
-    storageClassName: standard
+    storageClassName: longhorn
 
-# Single scheduler for local dev
+# Single scheduler
 scheduler:
   replicas: 1
 
-# Single worker for local dev
+# Single worker
 workers:
   replicas: 1
   persistence:
     enabled: true
-    storageClassName: standard
+    storageClassName: longhorn
 
-# API server with NodePort for local access
+# API server with NodePort for access
 apiServer:
   service:
     type: NodePort
@@ -59,17 +59,17 @@ dags:
     enabled: false
   gitSync:
     enabled: true
-    repo: https://github.com/datasurface/demo1_airflow.git  # Change to your DAG repo
+    repo: https://github.com/billynewport/demo_cokub_airflow.git
     branch: main
     subPath: dags
     wait: 60
-    credentialsSecret: git-dags  # Secret must have GITSYNC_USERNAME and GITSYNC_PASSWORD keys
+    credentialsSecret: git-dags
 
-# Logs - enable persistence for Docker Desktop (hostpath works for single-node clusters with RWX)
+# Logs persistence
 logs:
   persistence:
     enabled: true
-    storageClassName: hostpath
+    storageClassName: longhorn
     size: 5Gi
 
 config:

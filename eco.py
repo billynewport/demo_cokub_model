@@ -12,8 +12,8 @@ from datasurface.documentation import PlainTextDocumentation
 from datasurface.repos import GitHubRepository
 from rte_demo import createDemoRTE
 
-GIT_REPO_OWNER: str = "git_username"  # Change to your github username
-GIT_REPO_NAME: str = "gitrepo_name"  # Change to your github repository name containing this project
+GIT_REPO_OWNER: str = "billynewport"
+GIT_REPO_NAME: str = "demo_cokub_model"
 
 
 def createEcosystem() -> Ecosystem:

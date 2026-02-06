@@ -21,9 +21,9 @@ from datasurface.platforms.yellow.assembly import GitCacheConfig, YellowExternal
 from datasurface.repos import VersionPatternReleaseSelector, GitHubRepository, ReleaseType, VersionPatterns
 
 # Docker Desktop configuration
-KUB_NAME_SPACE: str = "demo1"
+KUB_NAME_SPACE: str = "demo_cokub"
 AIRFLOW_SERVICE_ACCOUNT: str = "airflow-worker"
-MERGE_HOST: str = "host.docker.internal"  # Access Docker containers from K8s
+MERGE_HOST: str = "postgres-co"
 MERGE_DBNAME: str = "merge_db"
 
 
@@ -40,7 +40,7 @@ def createDemoPSP() -> YellowPlatformServiceProvider:
     git_config: GitCacheConfig = GitCacheConfig(
         enabled=True,
         access_mode="ReadWriteOnce",
-        storageClass="standard"
+        storageClass="longhorn"
     )
     yp_assembly: YellowExternalAirflow3AndMergeDatabase = YellowExternalAirflow3AndMergeDatabase(
         name="Demo",
@@ -56,7 +56,7 @@ def createDemoPSP() -> YellowPlatformServiceProvider:
         mergeRW_Credential=Credential("postgres-demo-merge", CredentialType.USER_PASSWORD),
         yp_assembly=yp_assembly,
         merge_datacontainer=k8s_merge_datacontainer,
-        pv_storage_class="standard",
+        pv_storage_class="longhorn",
         datasurfaceDockerImage="registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.1.0",
         dataPlatforms=[
             YellowDataPlatform(
