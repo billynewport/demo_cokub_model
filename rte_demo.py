@@ -39,7 +39,7 @@ def createDemoPSP() -> YellowPlatformServiceProvider:
 
     git_config: GitCacheConfig = GitCacheConfig(
         enabled=True,
-        access_mode="ReadWriteOnce",
+        access_mode="ReadWriteMany",
         storageClass="longhorn"
     )
     yp_assembly: YellowExternalAirflow3AndMergeDatabase = YellowExternalAirflow3AndMergeDatabase(
