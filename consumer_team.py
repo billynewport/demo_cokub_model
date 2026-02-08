@@ -30,5 +30,24 @@ def createConsumerTeam(gz: GovernanceZone) -> None:
                     )
                 )
             )
+        ),
+        Workspace(
+            "ConsumerCDC",
+            DataPlatformManagedDataContainer("ConsumerCDC container"),
+            PlainTextDocumentation("Workspace to consume the datasets in CustomerDB_SQLServer datastore using SCD2"),
+            DatasetGroup(
+                "SCD2_DSG",
+                sinks=[
+                    DatasetSink("CustomerDB_SQLServer", "customers"),
+                    DatasetSink("CustomerDB_SQLServer", "addresses")
+                ],
+                platform_chooser=WorkspacePlatformConfig(
+                    hist=ConsumerRetentionRequirements(
+                        r=DataMilestoningStrategy.SCD2,
+                        latency=DataLatency.MINUTES,
+                        regulator=None
+                    )
+                )
+            )
         )
     )
