@@ -11,5 +11,18 @@
           "status": "PROVISIONED"
         }
       ]
+    },
+    {
+      "dsgName": "SCD2_DSG",
+      "workspace": "ConsumerCDC",
+      "assignments": [
+        {
+          "dataPlatform": "SCD2",
+          "documentation": "SCD2 assignment for ConsumerCDC workspace",
+          "productionStatus": "NOT_PRODUCTION",
+          "deprecationsAllowed": "NEVER",
+          "status": "PROVISIONED"
+        }
+      ]
     }
   ]
