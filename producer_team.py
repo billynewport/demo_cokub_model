@@ -57,13 +57,13 @@ def createProducerTeam(gz: GovernanceZone) -> None:
                     schema=DDLTable(
                         columns=[
                             DDLColumn("id", VarChar(20), nullable=NullableStatus.NOT_NULLABLE, primary_key=PrimaryKeyStatus.PK),
-                            DDLColumn("firstname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("lastname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("firstName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("lastName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("dob", Date(), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("email", VarChar(100)),
                             DDLColumn("phone", VarChar(100)),
-                            DDLColumn("primaryaddressid", VarChar(20)),
-                            DDLColumn("billingaddressid", VarChar(20))
+                            DDLColumn("primaryAddressId", VarChar(20)),
+                            DDLColumn("billingAddressId", VarChar(20))
                         ]
                     ),
                     classifications=[SimpleDC(SimpleDCTypes.CPI, "Customer")]
@@ -73,11 +73,11 @@ def createProducerTeam(gz: GovernanceZone) -> None:
                     schema=DDLTable(
                         columns=[
                             DDLColumn("id", VarChar(20), nullable=NullableStatus.NOT_NULLABLE, primary_key=PrimaryKeyStatus.PK),
-                            DDLColumn("customerid", VarChar(20), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("streetname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("customerId", VarChar(20), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("streetName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("city", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("state", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("zipcode", VarChar(30), nullable=NullableStatus.NOT_NULLABLE)
+                            DDLColumn("zipCode", VarChar(30), nullable=NullableStatus.NOT_NULLABLE)
                         ]
                     ),
                     classifications=[SimpleDC(SimpleDCTypes.CPI, "Address")]
@@ -99,13 +99,13 @@ def createProducerTeam(gz: GovernanceZone) -> None:
                     schema=DDLTable(
                         columns=[
                             DDLColumn("id", VarChar(20), nullable=NullableStatus.NOT_NULLABLE, primary_key=PrimaryKeyStatus.PK),
-                            DDLColumn("firstname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("lastname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("firstName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("lastName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("dob", Date(), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("email", VarChar(100)),
                             DDLColumn("phone", VarChar(100)),
-                            DDLColumn("primaryaddressid", VarChar(20)),
-                            DDLColumn("billingaddressid", VarChar(20))
+                            DDLColumn("primaryAddressId", VarChar(20)),
+                            DDLColumn("billingAddressId", VarChar(20))
                         ]
                     ),
                     classifications=[SimpleDC(SimpleDCTypes.CPI, "Customer")]
@@ -115,11 +115,11 @@ def createProducerTeam(gz: GovernanceZone) -> None:
                     schema=DDLTable(
                         columns=[
                             DDLColumn("id", VarChar(20), nullable=NullableStatus.NOT_NULLABLE, primary_key=PrimaryKeyStatus.PK),
-                            DDLColumn("customerid", VarChar(20), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("streetname", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("customerId", VarChar(20), nullable=NullableStatus.NOT_NULLABLE),
+                            DDLColumn("streetName", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("city", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
                             DDLColumn("state", VarChar(100), nullable=NullableStatus.NOT_NULLABLE),
-                            DDLColumn("zipcode", VarChar(30), nullable=NullableStatus.NOT_NULLABLE)
+                            DDLColumn("zipCode", VarChar(30), nullable=NullableStatus.NOT_NULLABLE)
                         ]
                     ),
                     classifications=[SimpleDC(SimpleDCTypes.CPI, "Address")]
