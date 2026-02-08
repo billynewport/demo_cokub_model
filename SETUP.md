@@ -1,11 +1,11 @@
 # Demo1 docker prompt
 
- Create a DataSurface Yellow system on my local Docker Desktop Kubernetes.
+ Create a DataSurface Yellow system on my remote Kubernetes.
  Configuration:
-    - Model repository: billynewport/demo2_actual
-    - Airflow DAG repository: billynewport/demo2_airflow
+    - Model repository: billynewport/demo_cokub_model
+    - Airflow DAG repository: billynewport/demo_cokub_airflow
     - GitHub username: billynewport
-    - Namespace: demo1
+    - Namespace: demo1-cokub
     - DataSurface version: 1.1.0
 Environment variables already set:
     - GITLAB_CUSTOMER_USER / GITLAB_CUSTOMER_TOKEN - GitLab registry credentials

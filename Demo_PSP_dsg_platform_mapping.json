@@ -1,0 +1,15 @@
+[
+    {
+      "dsgName": "SCD2_DSG",
+      "workspace": "Consumer1",
+      "assignments": [
+        {
+          "dataPlatform": "SCD2",
+          "documentation": "SCD2 assignment for Consumer1 workspace",
+          "productionStatus": "NOT_PRODUCTION",
+          "deprecationsAllowed": "NEVER",
+          "status": "PROVISIONED"
+        }
+      ]
+    }
+  ]

@@ -1,12 +1,6 @@
 """
 Copyright (c) 2026 DataSurface Inc. All Rights Reserved.
 Proprietary Software - See LICENSE.txt for terms.
-
-This is a starter datasurface repository. It defines a simple Ecosystem using YellowDataPlatform with SCD2 modes. It
-ingests data from a single source, using a Workspace to produce a masked version of that data and provides consumer Workspaces
-to that data in the primary merge Postgres.
-
-It will generate 1 pipelines and it supports full milestoning (SCD2).
 """
 
 from datasurface.dsl import ProductionStatus, \
@@ -19,11 +13,11 @@ from datasurface.documentation import PlainTextDocumentation
 from datasurface.platforms.yellow import YellowDataPlatform, YellowPlatformServiceProvider
 from datasurface.platforms.yellow.assembly import GitCacheConfig, YellowExternalAirflow3AndMergeDatabase
 from datasurface.repos import VersionPatternReleaseSelector, GitHubRepository, ReleaseType, VersionPatterns
+from db_constants import MERGE_HOST
 
 # Docker Desktop configuration
 KUB_NAME_SPACE: str = "demo-cokub"
 AIRFLOW_SERVICE_ACCOUNT: str = "airflow-worker"
-MERGE_HOST: str = "postgres-co"
 MERGE_DBNAME: str = "merge_db"
 
 

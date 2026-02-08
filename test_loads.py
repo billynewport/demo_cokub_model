@@ -1,5 +1,7 @@
-# Copyright (c) 2026 DataSurface Inc. All Rights Reserved.
-# Proprietary Software - See LICENSE.txt for terms.
+"""
+Copyright (c) 2026 DataSurface Inc. All Rights Reserved.
+Proprietary Software - See LICENSE.txt for terms.
+"""
 
 import unittest
 from datasurface.dsl import Ecosystem, DataPlatform, EcosystemPipelineGraph, PlatformPipelineGraph
@@ -56,7 +58,7 @@ class TestEcosystem(unittest.TestCase):
         graph: EcosystemPipelineGraph = ecosys.getGraph()
         self.assertIsNotNone(graph)
         scd2_root: Optional[PlatformPipelineGraph] = graph.roots.get(scd2_dp.name)
-        self.assertIsNone(scd2_root)
+        self.assertIsNotNone(scd2_root)
 
 
 if __name__ == "__main__":

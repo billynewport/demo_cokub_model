@@ -1,9 +1,6 @@
 """
-// Copyright (c) 2026 William Newport
-// SPDX-License-Identifier: BUSL-1.1
-
-This is a starter datasurface repository. It defines a simple Ecosystem using YellowDataPlatform with Live and Forensic modes.
-It will generate 2 pipelines, one with live records only and the other with full milestoning.
+Copyright (c) 2026 DataSurface Inc. All Rights Reserved.
+Proprietary Software - See LICENSE.txt for terms.
 """
 
 from datasurface.dsl import InfrastructureVendor, InfrastructureLocation, Ecosystem, CloudVendor, RuntimeDeclaration
@@ -11,9 +8,9 @@ from datasurface.security import Credential, CredentialType
 from datasurface.documentation import PlainTextDocumentation
 from datasurface.repos import GitHubRepository
 from rte_demo import createDemoRTE
-
-GIT_REPO_OWNER: str = "billynewport"
-GIT_REPO_NAME: str = "demo_cokub_model"
+from datasurface.dsl import GovernanceZoneDeclaration
+from repo_constants import GIT_REPO_OWNER, GIT_REPO_NAME
+from demo_gz import createDemoGZ
 
 
 def createEcosystem() -> Ecosystem:
@@ -49,8 +46,13 @@ def createEcosystem() -> Ecosystem:
                 ]
             )
         ],
+        governance_zone_declarations=[
+            GovernanceZoneDeclaration("demo_gz", GitHubRepository(f"{GIT_REPO_OWNER}/{GIT_REPO_NAME}", "demo_gz_edit", credential=git))
+        ],
         liveRepo=GitHubRepository(f"{GIT_REPO_OWNER}/{GIT_REPO_NAME}", "main", credential=git)
     )
     # Define the demo RTE
     createDemoRTE(ecosys)
+    # Define the demo GZ
+    createDemoGZ(ecosys)
     return ecosys
