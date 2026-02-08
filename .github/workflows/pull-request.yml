@@ -2,7 +2,7 @@ name: Pull Request Check
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled]
 
 jobs:
   datasurface-pr-validator:
@@ -32,6 +32,15 @@ jobs:
         username: ${{ secrets.GITLAB_USERNAME }}
         password: ${{ secrets.GITLAB_ACCESS_TOKEN }}
 
+    - name: Check for breaking change approval
+      id: check_label
+      run: |
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'breaking-change-approved') }}" == "true" ]]; then
+          echo "ALLOW_BREAKS=--allow-breaking-changes" >> $GITHUB_OUTPUT
+        else
+          echo "ALLOW_BREAKS=" >> $GITHUB_OUTPUT
+        fi
+
     - name: Run check script in Docker container
       run: |
         docker run --rm \
@@ -42,4 +51,4 @@ jobs:
           -e HEAD_REPOSITORY="${{ github.event.pull_request.head.repo.full_name }}" \
           -e HEAD_BRANCH="${{ github.event.pull_request.head.ref }}" \
           registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.1.0 \
-          python -m datasurface.handler.action /workspace/main /workspace/pr
+          python -m datasurface.handler.action /workspace/main /workspace/pr  ${{ steps.check_label.outputs.ALLOW_BREAKS }}
