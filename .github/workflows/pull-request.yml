@@ -50,5 +50,5 @@ jobs:
           -e BASE_REPOSITORY="${{ github.repository }}" \
           -e HEAD_REPOSITORY="${{ github.event.pull_request.head.repo.full_name }}" \
           -e HEAD_BRANCH="${{ github.event.pull_request.head.ref }}" \
-          registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.1.0 \
+          registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.2.2 \
           python -m datasurface.handler.action /workspace/main /workspace/pr  ${{ steps.check_label.outputs.ALLOW_BREAKS }}
