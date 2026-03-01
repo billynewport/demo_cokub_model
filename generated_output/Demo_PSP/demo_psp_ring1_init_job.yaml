@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-psp-ring1-init
+  namespace: demo-cokub
+spec:
+  template:
+    spec:
+      containers:
+      - name: ring1-init
+        image: registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.2.2
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            echo "🔄 Starting Ring 1 Initialization for Demo_PSP"
+            
+            # Run Ring 1 initialization for platform using cache-aware CLI
+            echo "🔧 Running Ring 1 initialization with shared cache..."
+            python -m datasurface.cmd.platform generatePlatformBootstrap \
+              --ringLevel 1 \
+              --git-repo-path /cache/git-cache \
+              --git-repo-type github \
+              --git-repo-url https://github.com \
+              --git-repo-owner billynewport \
+              --git-repo-name demo_cokub_model \
+              --git-repo-branch main \
+              --git-platform-repo-credential-name git \
+              --rte-name demo \
+            --use-git-cache \
+            --max-cache-age-minutes 5 \
+              --output /workspace/generated_artifacts \
+              --psp Demo_PSP
+            
+            echo "✅ Ring 1 initialization complete for Demo_PSP!"
+        env:
+          - name: PYTHONPATH
+            value: "/app/src"
+          - name: git_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: git
+                key: TOKEN
+          - name: postgres-demo-merge_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-demo-merge
+                key: USER
+          - name: postgres-demo-merge_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-demo-merge
+                key: PASSWORD
+        volumeMounts:
+        
+        - name: git-model-cache
+          mountPath: /cache/git-cache
+        
+        - name: workspace
+          mountPath: /workspace
+      volumes:
+      
+      - name: git-model-cache
+        persistentVolumeClaim:
+          claimName: git-cache-pvc
+      
+      - name: workspace
+        emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 3 

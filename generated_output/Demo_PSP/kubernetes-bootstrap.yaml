@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: git-cache-pvc
+  namespace: demo-cokub
+spec:
+  storageClassName: longhorn
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+# Logging Configuration ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-logging-config
+  namespace: demo-cokub
+data:
+  logging.conf: |
+    # Yellow Data Platform Logging Configuration
+    # This configures structured JSON logging for Kubernetes environments
+    
+    # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_LEVEL=INFO
+    
+    # Log format: 'json' for production, 'text' for development  
+    LOG_FORMAT=text
+    
+    # Platform-specific logging settings
+    YELLOW_ENVIRONMENT=production
+    PSP_NAME=Demo
+    NAMESPACE=demo-cokub
+---
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-network-policy
+  namespace: demo-cokub
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+          namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: demo-cokub
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 8000  # MCP Server
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8083
+  egress:
+    # Allow all outbound traffic (needed for external database connections)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow standard database ports for bootstrap
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 3306  # MySQL
+        - protocol: TCP
+          port: 1521  # Oracle
+        - protocol: TCP
+          port: 1433  # SQL Server
+        - protocol: TCP
+          port: 50000 # DB2 
+---
+# MCP Server Deployment
+# Provides Model Context Protocol access to the DataSurface model
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-psp-mcp-server
+  namespace: demo-cokub
+  labels:
+    app: demo-psp-mcp-server
+    component: mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-psp-mcp-server
+  template:
+    metadata:
+      labels:
+        app: demo-psp-mcp-server
+        component: mcp
+    spec:
+      containers:
+        - name: mcp-server
+          image: registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.2.2
+          command: ["python", "-m", "datasurface.mcp"]
+          args:
+            - "--git-repo-path"
+            - "/cache/git-cache"
+            - "--git-repo-type"
+            - "github"
+            - "--git-repo-url"
+            - "https://github.com"
+            - "--git-repo-owner"
+            - "billynewport"
+            - "--git-repo-name"
+            - "demo_cokub_model"
+            - "--git-repo-branch"
+            - "main"
+            - "--git-platform-repo-credential-name"
+            - "git"
+            - "--rte-name"
+            - "demo"
+            
+            - "--use-git-cache"
+            
+            - "--max-cache-age-minutes"
+            - "5"
+            - "--refresh-interval"
+            - "300"
+            - "--transport"
+            - "sse"
+            
+          
+          ports:
+            - containerPort: 8000
+              name: mcp
+          
+          env:
+            - name: PYTHONPATH
+              value: "/app/src"
+            - name: git_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: git
+                  key: TOKEN
+            
+          volumeMounts:
+            
+            - name: git-model-cache
+              mountPath: /cache/git-cache
+            
+          resources:
+            requests:
+              memory: 256M
+              cpu: 100m
+            limits:
+              memory: 512M
+              cpu: 500m
+      volumes:
+        
+        - name: git-model-cache
+          persistentVolumeClaim:
+            claimName: git-cache-pvc
+        
+---
+
+# MCP Server Service (only for SSE transport)
+# NodePort allows external access from MCP clients like Cursor
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-psp-mcp
+  namespace: demo-cokub
+  labels:
+    app: demo-psp-mcp-server
+spec:
+  type: NodePort
+  selector:
+    app: demo-psp-mcp-server
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: mcp
+      
+      name: mcp
+---

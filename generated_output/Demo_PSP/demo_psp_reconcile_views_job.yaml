@@ -1,0 +1,70 @@
+# reconcile-views-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-psp-reconcile-views-job
+  namespace: demo-cokub
+spec:
+  template:
+    spec:
+      containers:
+      - name: reconcile-views-handler
+        image: registry.gitlab.com/datasurface-inc/datasurface/datasurface:v1.2.2
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          echo "🔄 Starting DataSurface Reconcile Views Handler"
+          
+          # Run reconcile views job using shared git cache
+          echo "🔧 Running reconcile views job with shared cache..."
+          python -m datasurface.platforms.yellow.reconcile_workspace_views \
+            --psp Demo_PSP \
+            --git-repo-path /cache/git-cache \
+            --git-repo-type github \
+            --git-repo-url https://github.com \
+            --git-repo-owner billynewport \
+            --git-repo-name demo_cokub_model \
+            --git-repo-branch main \
+            --git-platform-repo-credential-name git \
+            --rte-name demo \
+            
+            --use-git-cache \
+            
+            --max-cache-age-minutes 5
+          
+          echo "✅ Reconcile views job complete!"
+        env:
+        - name: PYTHONPATH
+          value: "/app/src"
+        - name: git_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: git
+              key: TOKEN
+        - name: postgres-demo-merge_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-demo-merge
+              key: USER
+        - name: postgres-demo-merge_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-demo-merge
+              key: PASSWORD
+        
+        
+        
+        
+        
+        
+        volumeMounts:
+        - name: git-model-cache
+          mountPath: /cache/git-cache
+      volumes:
+      - name: git-model-cache
+        persistentVolumeClaim:
+          claimName: git-cache-pvc
+      
+      restartPolicy: Never
+  backoffLimit: 3
